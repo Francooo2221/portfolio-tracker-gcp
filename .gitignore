@@ -29,6 +29,7 @@ __pycache__/
 # Pliki środowiskowe z kluczami API
 .env
 .secrets
+hosts.ini
 
 # --- Ansible ---
 # Pliki tymczasowe i retry
