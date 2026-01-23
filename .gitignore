@@ -1,0 +1,43 @@
+# --- Terraform ---
+# Ignoruj pliki stanu (zawierają wrażliwe dane o infrastrukturze)
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
+# Ignoruj pliki logów i crashy
+.terraform.lock.hcl
+crash.log
+
+# --- Python ---
+# Środowiska wirtualne
+venv/
+.venv/
+env/
+# Pliki skompilowane i cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+# Dane z yfinance / pandas
+.ipynb_checkpoints/
+
+# --- GCP & Secrets ---
+# Klucze JSON do kont serwisowych (Service Accounts)
+*.json
+!credentials.json.example  # Pozwól tylko na pliki przykładowe
+# Pliki środowiskowe z kluczami API
+.env
+.secrets
+
+# --- Ansible ---
+# Pliki tymczasowe i retry
+*.retry
+# Jeśli używasz vault, a masz plik z hasłem lokalnie
+.ansible_vault_password
+
+# --- Systemowe i IDE ---
+.DS_Store
+.vscode/
+.idea/
+*.log
