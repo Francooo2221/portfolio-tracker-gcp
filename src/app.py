@@ -1,14 +1,12 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Holding, DailyPrice
-import os
+from models import db, User, Asset, Transaction, DailyPrice
 from tasks import update_prices
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'giga-tajne-haslo-zmien-mnie'
+app.config['SECRET_KEY'] = 'giga-tajne-haslo'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///portfolio.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 login_manager = LoginManager(app)
@@ -18,32 +16,32 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# --- TRASY ---
-
 @app.route('/')
 @login_required
 def dashboard():
-    user_holdings = Holding.query.filter_by(user_id=current_user.id).all()
-    # Tutaj w przyszłości dodamy pobieranie cen z DailyPrice, żeby liczyć zysk
-    return render_template('dashboard.html', holdings=user_holdings)
+    # Pobieramy aktywa użytkownika
+    user_assets = Asset.query.filter_by(user_id=current_user.id).all()
+    return render_template('dashboard.html', assets=user_assets)
 
 @app.route('/add', methods=['POST'])
 @login_required
-def add_holding():
+def add_transaction():
     ticker = request.form.get('ticker').upper()
     amount = float(request.form.get('amount'))
-    buy_price = float(request.form.get('buy_price'))
-    asset_type = request.form.get('asset_type', 'usa')
+    price = float(request.form.get('buy_price'))
     
-    new_holding = Holding(
-        ticker=ticker, 
-        amount=amount, 
-        buy_price=buy_price, 
-        asset_type=asset_type,
-        owner=current_user
-    )
-    db.session.add(new_holding)
+    # 1. Sprawdź czy użytkownik ma już to aktywo
+    asset = Asset.query.filter_by(ticker=ticker, user_id=current_user.id).first()
+    if not asset:
+        asset = Asset(ticker=ticker, user_id=current_user.id, asset_type='stock')
+        db.session.add(asset)
+        db.session.commit() # Commit, żeby dostać ID dla transakcji
+    
+    # 2. Dodaj transakcję
+    new_trans = Transaction(asset_id=asset.id, amount=amount, price_at_buy=price)
+    db.session.add(new_trans)
     db.session.commit()
+    
     return redirect(url_for('dashboard'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -53,34 +51,17 @@ def login():
         if user and check_password_hash(user.password, request.form.get('password')):
             login_user(user)
             return redirect(url_for('dashboard'))
-        flash('Błędny login lub hasło')
     return render_template('login.html')
 
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
 @app.route('/update-manual')
-@login_required
 def manual_update():
-    try:
-        update_prices(app)
-        flash('Ceny zostały pomyślnie zaktualizowane!')
-    except Exception as e:
-        flash(f'Błąd aktualizacji: {str(e)}')
+    update_prices(app)
     return redirect(url_for('dashboard'))
 
-def init_system():
+if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         if not User.query.filter_by(username='admin').first():
-            hashed_pw = generate_password_hash('TwojeHaslo123', method='pbkdf2:sha256')
-            admin = User(username='admin', password=hashed_pw)
-            db.session.add(admin)
+            db.session.add(User(username='admin', password=generate_password_hash('admin123')))
             db.session.commit()
-            print("System zainicjalizowany: Konto admin stworzone.")
-
-if __name__ == '__main__':
-    init_system()
-    app.run(host='0.0.0.0', port=8501) # Zmieniłem na 5000, bo to standard Clouda
+    app.run(host='0.0.0.0', port=8501)
