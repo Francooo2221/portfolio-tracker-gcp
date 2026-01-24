@@ -1,0 +1,28 @@
+---
+- name: Wdrożenie aplikacji Portfolio Tracker
+  hosts: gcp_vms
+  become: yes  
+
+  tasks:
+    - name: Upewnij się, że folder aplikacji istnieje
+      file:
+        path: "/home/{{ ansible_user }}/app_container"
+        state: directory
+        owner: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Kopiowanie plików aplikacji (Kod + Szablony)
+      copy:
+        src: ../src/      
+        dest: "/home/{{ ansible_user }}/app_container/"
+        owner: "{{ ansible_user }}"
+
+    - name: Instalacja zaleznosci Pythona w venv
+      pip:
+        requirements: "/home/{{ ansible_user }}/app_container/requirements.txt"
+        virtualenv: "/home/{{ ansible_user }}/app_container/venv"
+        virtualenv_command: python3 -m venv
+
+    - name: Informacja o gotowosci
+      debug:
+        msg: "Aplikacja wgrana! Odpal ja komenda: cd ~/app_container && ./venv/bin/python3 app.py"
