@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="card-title">Twoje Portfolio</h2>
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Ticker</th>
+                    <th>Ilość</th>
+                    <th>Cena zakupu</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for holding in holdings %}
+                <tr>
+                    <td>{{ holding.ticker }}</td>
+                    <td>{{ holding.amount }}</td>
+                    <td>{{ holding.buy_price }} $</td>
+                    <td>{{ holding.date_bought.strftime('%Y-%m-%d') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <hr>
+        <h4>Dodaj nowy zakup</h4>
+        <form action="/add" method="POST" class="row g-3">
+            <div class="col-md-3"><input type="text" name="ticker" class="form-control" placeholder="Ticker (np. BTC-USD)" required></div>
+            <div class="col-md-3"><input type="number" step="any" name="amount" class="form-control" placeholder="Ilość" required></div>
+            <div class="col-md-3"><input type="number" step="any" name="buy_price" class="form-control" placeholder="Cena zakupu" required></div>
+            <div class="col-md-3"><button type="submit" class="btn btn-primary w-100">Dodaj</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
