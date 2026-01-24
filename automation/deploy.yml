@@ -1,28 +1,53 @@
 ---
-- name: Wdrożenie aplikacji Portfolio Tracker
-  hosts: gcp_vms
-  become: yes  
-
+- name: Deploy Flask Portfolio App
+  hosts: webservers
+  become: yes
   tasks:
-    - name: Upewnij się, że folder aplikacji istnieje
+    - name: Update apt cache and install python3-pip
+      apt:
+        update_cache: yes
+        name: 
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Ensure app directory exists
       file:
-        path: "/home/{{ ansible_user }}/app_container"
+        path: /opt/portfolio
         state: directory
         owner: "{{ ansible_user }}"
-        mode: '0755'
 
-    - name: Kopiowanie plików aplikacji (Kod + Szablony)
+    - name: Copy app files to server
       copy:
-        src: ../src/      
-        dest: "/home/{{ ansible_user }}/app_container/"
+        src: ../src/
+        dest: /opt/portfolio/
         owner: "{{ ansible_user }}"
 
-    - name: Instalacja zaleznosci Pythona w venv
+    - name: Install requirements
       pip:
-        requirements: "/home/{{ ansible_user }}/app_container/requirements.txt"
-        virtualenv: "/home/{{ ansible_user }}/app_container/venv"
-        virtualenv_command: python3 -m venv
+        requirements: /opt/portfolio/requirements.txt
+        executable: pip3
 
-    - name: Informacja o gotowosci
-      debug:
-        msg: "Aplikacja wgrana! Odpal ja komenda: cd ~/app_container && ./venv/bin/python3 app.py"
+    - name: Create systemd service for Flask
+      copy:
+        dest: /etc/systemd/system/portfolio.service
+        content: |
+          [Unit]
+          Description=Giga Tanio Portfolio Flask App
+          After=network.target
+
+          [Service]
+          User={{ ansible_user }}
+          WorkingDirectory=/opt/portfolio
+          ExecStart=/usr/bin/python3 app.py
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Restart portfolio service
+      systemd:
+        name: portfolio
+        state: restarted
+        enabled: yes
+        daemon_reload: yes

@@ -3,6 +3,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Holding, DailyPrice
 import os
+from tasks import update_prices
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'giga-tajne-haslo-zmien-mnie'
@@ -59,6 +60,16 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/update-manual')
+@login_required
+def manual_update():
+    try:
+        update_prices(app)
+        flash('Ceny zostały pomyślnie zaktualizowane!')
+    except Exception as e:
+        flash(f'Błąd aktualizacji: {str(e)}')
+    return redirect(url_for('dashboard'))
 
 def init_system():
     with app.app_context():
