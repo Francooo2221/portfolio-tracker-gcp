@@ -1,36 +1,67 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="card shadow-sm">
-    <div class="card-body">
-        <h2 class="card-title">Twoje Portfolio</h2>
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Ticker</th>
-                    <th>Ilość</th>
-                    <th>Cena zakupu</th>
-                    <th>Data</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for holding in holdings %}
-                <tr>
-                    <td>{{ holding.ticker }}</td>
-                    <td>{{ holding.amount }}</td>
-                    <td>{{ holding.buy_price }} $</td>
-                    <td>{{ holding.date_bought.strftime('%Y-%m-%d') }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <hr>
-        <h4>Dodaj nowy zakup</h4>
-        <form action="/add" method="POST" class="row g-3">
-            <div class="col-md-3"><input type="text" name="ticker" class="form-control" placeholder="Ticker (np. BTC-USD)" required></div>
-            <div class="col-md-3"><input type="number" step="any" name="amount" class="form-control" placeholder="Ilość" required></div>
-            <div class="col-md-3"><input type="number" step="any" name="buy_price" class="form-control" placeholder="Cena zakupu" required></div>
-            <div class="col-md-3"><button type="submit" class="btn btn-primary w-100">Dodaj</button></div>
-        </form>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Giga Tanio Portfolio</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Twoje Aktywa</h1>
+            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Wyloguj</a>
+        </div>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <form action="{{ url_for('add_holding') }}" method="POST" class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" name="ticker" class="form-control" placeholder="Ticker (np. AAPL, BTC-USD, ALE.WA)" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" step="any" name="amount" class="form-control" placeholder="Ilość" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" step="any" name="buy_price" class="form-control" placeholder="Cena zakupu" required>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="asset_type" class="form-select">
+                            <option value="usa">Akcje USA</option>
+                            <option value="gpw">GPW (Polska)</option>
+                            <option value="crypto">Kryptowaluty</option>
+                            <option value="metal">Kruszce / Inne</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Dodaj</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive shadow-sm bg-white p-3 rounded">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Typ</th>
+                        <th>Ilość</th>
+                        <th>Cena zakupu</th>
+                        <th>Wartość wejścia</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for h in holdings %}
+                    <tr>
+                        <td><strong>{{ h.ticker }}</strong></td>
+                        <td><span class="badge bg-info text-dark">{{ h.asset_type }}</span></td>
+                        <td>{{ h.amount }}</td>
+                        <td>{{ h.buy_price }}</td>
+                        <td>{{ (h.amount * h.buy_price) | round(2) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
-{% endblock %}
+</body>
+</html>

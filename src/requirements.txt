@@ -4,3 +4,4 @@ flask-login
 werkzeug
 yfinance
 pandas
+yfinance
