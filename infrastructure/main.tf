@@ -5,14 +5,12 @@ resource "google_compute_instance" "vm_instance" {
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
-      size  = 20 # Rozmiar dysku w GB
+      size  = 20 
     }
   }
 
   network_interface {
     network = google_compute_network.vpc_network.name
-    access_config {
-      // Ephemeral IP
-    }
+    access_config {}
   }
 }

@@ -90,28 +90,27 @@
                     joinStyle: 'round'
                 }
             },
-            // KLUCZ DO SUKCESU:
             normalized: true, 
             spanGaps: true,
             datasets: {
                 line: {
                     decimation: {
                         enabled: true,
-                        algorithm: 'lttb', // Najlepszy algorytm do zachowania kształtu przy redukcji punktów
+                        algorithm: 'lttb', 
                     }
                 }
             },
             scales: {
                 x: {
                     ticks: {
-                        maxTicksLimit: 10 // Nie upychaj wszystkich dat pod spodem
+                        maxTicksLimit: 10 
                     }
                 }
             }
         };
 
     function initCharts() {
-        // Wykres Kołowy 1
+
         new Chart(document.getElementById('assetChart'), {
             type: 'doughnut',
             data: {
@@ -121,7 +120,6 @@
             options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
         });
 
-        // Wykres Kołowy 2
         new Chart(document.getElementById('typeChart'), {
             type: 'doughnut',
             data: {
@@ -131,7 +129,6 @@
             options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
         });
 
-        // Wykres Wartości (Liniowy)
         vChart = new Chart(document.getElementById('valueLineChart'), {
             type: 'line',
             data: { 
@@ -140,18 +137,17 @@
                     label: 'Wartość', 
                     data: fullV, 
                     borderColor: '#0d6efd', 
-                    borderWidth: 1.2,       // Cienka linia
-                    pointRadius: 0,         // Brak kropkowanych punktów
-                    pointHoverRadius: 4,    // Kropka tylko przy najechaniu
+                    borderWidth: 1.2,       
+                    pointRadius: 0,         
+                    pointHoverRadius: 4,    
                     fill: true, 
                     backgroundColor: 'rgba(13,110,253,0.05)', 
-                    tension: 0.2            // Subtelne, profesjonalne wygładzenie
+                    tension: 0.2           
                 }] 
             },
             options: commonOptions
         });
 
-        // Wykres Zysku (Liniowy) - ODCHUDZONY
         pChart = new Chart(document.getElementById('profitLineChart'), {
             type: 'line',
             data: { 
@@ -160,22 +156,21 @@
                     label: 'Zysk', 
                     data: fullP, 
                     borderColor: '#198754', 
-                    borderWidth: 1.2,       // Cienka linia
-                    pointRadius: 0,         // Brak kropkowanych punktów
-                    pointHoverRadius: 4,    // Kropka tylko przy najechaniu
+                    borderWidth: 1.2,       
+                    pointRadius: 0,         
+                    pointHoverRadius: 4,    
                     fill: true,
-                    backgroundColor: 'rgba(25, 135, 84, 0.05)', // Lekka poświata dla zysku
+                    backgroundColor: 'rgba(25, 135, 84, 0.05)', 
                     tension: 0.2 
                 }] 
             },
             options: commonOptions
         });
         
-        updateTimeframe(30, document.querySelector('.time-btn')); // Start z widokiem 1M
+        updateTimeframe(30, document.querySelector('.time-btn')); 
     }
 
     function updateTimeframe(days, btn) {
-        // Podświetlanie przycisków (jak wcześniej)
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('btn-primary', 'active'));
         btn.classList.add('btn-primary', 'active');
 
@@ -183,9 +178,7 @@
         let v = (days === 'max') ? fullV : fullV.slice(-days);
         let p = (days === 'max') ? fullP : fullP.slice(-days);
 
-        // Jeśli zakres jest większy niż rok, wyłączamy kropki na linii, żeby było czytelniej
         const showPoints = days <= 365 && days !== 'max';
-
         vChart.data.labels = l;
         vChart.data.datasets[0].data = v;
         vChart.data.datasets[0].pointRadius = showPoints ? 3 : 0; 

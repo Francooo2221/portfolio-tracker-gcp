@@ -27,7 +27,6 @@ def load_user(user_id):
 def get_live_price(ticker):
     try:
         data = yf.Ticker(ticker)
-        # Pobieramy ostatnią cenę
         price = data.fast_info['last_price']
         return jsonify({'price': round(price, 2)})
     except Exception as e:
@@ -43,7 +42,6 @@ def analytics():
     all_tickers_data = {}
     all_dates = set()
 
-    # 1. Pobieramy dane dla każdego tickera
     for asset in user_assets:
         try:
             ticker = yf.Ticker(asset.ticker)
@@ -52,7 +50,6 @@ def analytics():
             hist = None
 
         if hist is not None and not hist.empty:
-            # Dane do "tortu" (aktualne)
             last_price = hist['Close'].iloc[-1]
             current_val = round(asset.total_amount * last_price, 2)
 
@@ -62,7 +59,6 @@ def analytics():
                 t_name = (asset.asset_type or "Inne").upper()
                 type_data[t_name] = type_data.get(t_name, 0) + current_val
 
-            # Dane do osi czasu
             hist.index = hist.index.strftime('%Y-%m-%d')
             all_tickers_data[asset.ticker] = {
                 'prices': hist['Close'].to_dict(),
@@ -72,7 +68,6 @@ def analytics():
             all_dates.update(hist.index.tolist())
         
         elif asset.total_amount > 0:
-            # Aktywa 'Inne' (nieruchomości)
             last_p = asset.transactions[-1].price_at_buy if asset.transactions else 0
             val = round(asset.total_amount * last_p, 2)
             asset_labels.append(asset.ticker)
@@ -80,7 +75,6 @@ def analytics():
             t_name = (asset.asset_type or "Inne").upper()
             type_data[t_name] = type_data.get(t_name, 0) + val
 
-    # 2. Budujemy historię
     sorted_dates = sorted(list(all_dates))
     temp_labels, temp_values, temp_profit = [], [], []
     
@@ -96,19 +90,15 @@ def analytics():
             day_val += last_known_prices[ticker] * data['amount']
             day_cost += first_prices[ticker] * data['amount']
 
-        # Dodajemy do tymczasowych list tylko jeśli wartość portfela > 0
-        # To automatycznie usunie "puste lata" (np. od 1990 do 2020)
         if day_val > 0.1:
             temp_labels.append(d_str)
             temp_values.append(round(day_val, 2))
             temp_profit.append(round(day_val - day_cost, 2))
 
-    # 3. Finalna agregacja (żeby wykres był chudy i smukły)
     line_labels = []
     value_history = []
     profit_history = []
     
-    # Wybieramy co 5. punkt z przefiltrowanej już listy (tylko tam gdzie masz kasę)
     for i in range(len(temp_labels)):
         if i % 5 == 0 or i == len(temp_labels) - 1:
             line_labels.append(temp_labels[i])
@@ -131,36 +121,28 @@ def dashboard():
     holdings = []
     
     for asset in user_assets:
-        # 1. Pobieramy transakcje posortowane chronologicznie
         transactions = sorted(asset.transactions, key=lambda x: x.id)
         
         current_qty = 0
         total_cost_basis = 0
         
-        # 2. Obliczamy koszt bazowy metodą średniej ważonej
         for t in transactions:
-            if t.amount > 0:  # KUPNO
+            if t.amount > 0:  
                 current_qty += t.amount
                 total_cost_basis += t.amount * t.price_at_buy
-            else:  # SPRZEDAŻ (t.amount jest ujemne)
+            else:  
                 if current_qty > 0:
                     avg_buy_price = total_cost_basis / current_qty
                     current_qty += t.amount
-                    # Zmniejszamy koszt proporcjonalnie do średniej ceny zakupu
                     total_cost_basis += t.amount * avg_buy_price
                 else:
                     current_qty += t.amount
 
-        # 3. Jeśli faktycznie coś jeszcze posiadamy
         if current_qty > 0:
-            # Pobieramy ostatnią cenę z bazy daily_prices
             last_price_record = DailyPrice.query.filter_by(asset_id=asset.id)\
                                 .order_by(DailyPrice.date.desc()).first()
             current_price = last_price_record.price if last_price_record else 0
-            
-            # Obliczenia końcowe
             current_value = current_qty * current_price
-            # Zysk tylko dla aktywów, które wciąż mamy w portfelu
             profit_val = current_value - total_cost_basis
             profit_pct = (profit_val / total_cost_basis * 100) if total_cost_basis > 0 else 0
 
@@ -170,8 +152,8 @@ def dashboard():
                 'amount': current_qty,
                 'current_price': current_price,
                 'value': current_value,
-                'profit_val': profit_val, # Kwota zysku
-                'profit': profit_pct      # Procent zysku
+                'profit_val': profit_val, 
+                'profit': profit_pct      
             })
     if holdings:
         total_portfolio_value = sum(h['value'] for h in holdings)
@@ -231,11 +213,36 @@ def add_transaction():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = User.query.filter_by(username=request.form.get('username')).first()
-        if user and check_password_hash(user.password, request.form.get('password')):
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        
+        if user and user.check_password(password):
             login_user(user)
             return redirect(url_for('dashboard'))
+        else:
+            flash('Błędny login lub hasło', 'danger')
     return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if User.query.filter_by(username=username).first():
+            flash('Użytkownik już istnieje!', 'danger')
+            return redirect(url_for('register'))
+            
+        new_user = User(username=username)
+        new_user.set_password(password) 
+        db.session.add(new_user)
+        db.session.commit()
+        
+        flash('Konto założone!', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
 
 @app.route('/logout')
 @login_required
@@ -252,6 +259,6 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         if not User.query.filter_by(username='admin').first():
-            db.session.add(User(username='admin', password=generate_password_hash('admin123')))
+            db.session.add(User(username='admin', password_hash=generate_password_hash('admin123')))
             db.session.commit()
     app.run(host='0.0.0.0',debug=True, port=8501)
