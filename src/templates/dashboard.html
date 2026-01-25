@@ -1,67 +1,409 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Giga Tanio Portfolio</title>
+    <title>Portfolio tracker</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <style>
+        /* Nowoczesne karty z efektem szkła */
+        .card {
+            background: rgba(25, 25, 25, 0.8) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 15px !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            border-color: rgba(0, 255, 127, 0.3) !important; /* Subtelny blask przy hoverze */
+        }
+
+        /* Stylizacja tabeli */
+        .table {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            background: transparent !important;
+        }
+
+        .table tr {
+            background-color: #1a1a1a !important;
+            border-radius: 10px;
+            transition: background 0.2s;
+        }
+
+        .table tr td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+        .table tr td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+        .table tbody tr:hover {
+            background-color: #252525 !important;
+        }
+
+        /* Pasek nawigacji (jeśli masz) */
+        .btn-outline-info {
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0f0f0f;
+            color: #e0e0e0;
+        }
+
+        .main-title {
+            font-weight: 600;
+            font-size: 2rem;
+            /* Zamiast display-4 */
+            letter-spacing: -0.5px;
+            margin-bottom: 0;
+            background: linear-gradient(90deg, #ffffff, #a3a3a3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-section {
+            padding: 0px 0;
+            /* Mniejszy padding góra/dół */
+            border-bottom: 1px solid #222;
+            /* Subtelna linia oddzielająca */
+            margin-bottom: 0px;
+        }
+    </style>
 </head>
+
 <body class="bg-light">
     <div class="container mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Twoje Aktywa</h1>
-            <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Wyloguj</a>
+        <div class="d-flex justify-content-end mb-2">
+            <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-secondary opacity-50">Wyloguj się</a>
+        </div>
+        <div class="d-flex justify-content-end mb-2">
+            <a href="{{ url_for('analytics') }}" class="btn btn-outline-info me-2">Analityka</a>
+        </div>
+        <div class="text-center mb-5">
+            <h1 class="main-title display-4">Twoje Portfolio</h1>
+            <p class="text-muted">Przegląd Twoich inwestycji w czasie rzeczywistym</p>
         </div>
 
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <form action="{{ url_for('add_holding') }}" method="POST" class="row g-3">
-                    <div class="col-md-3">
-                        <input type="text" name="ticker" class="form-control" placeholder="Ticker (np. AAPL, BTC-USD, ALE.WA)" required>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="number" step="any" name="amount" class="form-control" placeholder="Ilość" required>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="number" step="any" name="buy_price" class="form-control" placeholder="Cena zakupu" required>
-                    </div>
-                    <div class="col-md-3">
-                        <select name="asset_type" class="form-select">
-                            <option value="usa">Akcje USA</option>
-                            <option value="gpw">GPW (Polska)</option>
-                            <option value="crypto">Kryptowaluty</option>
-                            <option value="metal">Kruszce / Inne</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">Dodaj</button>
-                    </div>
-                </form>
+        <div class="row mb-4">
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-dark text-light border-secondary h-100 shadow">
+                <div class="card-body text-center">
+                    <p class="text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.8rem;">Wartość Portfela
+                    </p>
+                    <h3 class="card-title mb-0">${{ "{:,.2f}".format(total_val) }}</h3>
+                    <small class="text-muted">Aktualna wycena rynkowa</small>
+                </div>
             </div>
         </div>
 
-        <div class="table-responsive shadow-sm bg-white p-3 rounded">
-            <table class="table table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Ticker</th>
-                        <th>Typ</th>
-                        <th>Ilość</th>
-                        <th>Cena zakupu</th>
-                        <th>Wartość wejścia</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for h in holdings %}
-                    <tr>
-                        <td><strong>{{ h.ticker }}</strong></td>
-                        <td><span class="badge bg-info text-dark">{{ h.asset_type }}</span></td>
-                        <td>{{ h.amount }}</td>
-                        <td>{{ h.buy_price }}</td>
-                        <td>{{ (h.amount * h.buy_price) | round(2) }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="col-md-4 mb-3">
+            <div class="card bg-dark text-light border-{{ 'success' if total_profit >= 0 else 'danger' }} h-100 shadow">
+                <div class="card-body text-center">
+                    <p class="text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.8rem;">Zysk / Strata
+                        (Netto)</p>
+                    <h3 class="card-title mb-0 text-{{ 'success' if total_profit >= 0 else 'danger' }}">
+                        {{ "+" if total_profit > 0 }}${{ "{:,.2f}".format(total_profit) }}
+                    </h3>
+                    <small class="text-muted">Wynik finansowy portfela</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card bg-dark text-light border-secondary h-100 shadow">
+                <div class="card-body text-center">
+                    <p class="text-secondary text-uppercase fw-bold mb-1" style="font-size: 0.8rem;">Stopa Zwrotu (ROI)
+                    </p>
+                    <h3 class="card-title mb-0 text-{{ 'success' if total_pct >= 0 else 'danger' }}">
+                        {{ "+" if total_pct > 0 }}{{ "%.2f"|format(total_pct) }}%
+                    </h3>
+                    <small class="text-muted">Procentowy wynik całości</small>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div class="card mb-4 shadow-sm bg-dark border-secondary">
+        <div class="card-body">
+            <form action="{{ url_for('add_transaction') }}" method="POST" class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="text-muted small">Ticker</label>
+                    <div class="input-group">
+                        <input type="text" id="tickerInput" name="ticker" class="form-control" placeholder="np. AAPL"
+                            required>
+                        <button type="button" class="btn btn-outline-info" onclick="fetchPrice()"
+                            title="Pobierz aktualną cenę">
+                            <i class="bi bi-arrow-clockwise"></i> $
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-1">
+                    <label class="text-muted small">Typ</label>
+                    <select name="transcation_type" class="form-select">
+                        <option value="buy">Kupno</option>
+                        <option value="sell">Sprzedaż</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="text-muted small">Cena (1 szt.)</label>
+                    <input type="number" step="any" id="price" name="buy_price" class="form-control" placeholder="0.00"
+                        required>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="text-muted small">Ilość</label>
+                    <input type="number" step="any" id="amount" name="amount" class="form-control" placeholder="0.00"
+                        required>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="text-muted small">Suma (Total)</label>
+                    <input type="number" step="any" id="total" class="form-control" placeholder="Razem">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="text-muted small">Kategoria</label>
+                    <select id="typeSelect" name="asset_type" class="form-select">
+                        <option value="usa">Akcje USA</option>
+                        <option value="gpw">GPW (Polska)</option>
+                        <option value="crypto">Kryptowaluty</option>
+                        <option value="metal">Kruszce / Inne</option>
+                        <option value="etf">ETF</option>
+                        <option value="inne">Inne</option>
+                    </select>
+                </div>
+                <script>
+                    document.getElementById('tickerInput').addEventListener('input', function (e) {
+                        const val = e.target.value.toUpperCase();
+                        const select = document.getElementById('typeSelect');
+
+                        if (val.includes('-USD')) {
+                            select.value = 'Krypto';
+                        } else if (val.includes('.WA')) {
+                            select.value = 'Akcje'; // Lub stwórz osobną kategorię GPW
+                        } else if (val.includes('=F')) {
+                            select.value = 'Metale';
+                        } else if (['VOO', 'SPY', 'QQQ', 'VT'].includes(val)) {
+                            select.value = 'ETF';
+                        }
+                        // Jeśli wpiszesz "Mieszkanie", skrypt nic nie zrobi, 
+                        // zostawiając Ci wolną rękę do wybrania "Nieruchomości"
+                    });
+                </script>
+
+                <div class="col-md-1">
+                    <button type="submit" id="submit-btn" class="btn btn-primary w-100" disabled>Dodaj</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        const tickerInput = document.getElementById('tickerInput');
+        const typeSelect = document.getElementById('typeSelect');
+        const submitBtn = document.getElementById('submit-btn');
+        const amtInput = document.getElementById('amount');
+        const prcInput = document.getElementById('price');
+        const totInput = document.getElementById('total');
+
+        const etf_tickers = [
+            // --- Szeroki rynek USA ---
+            'VOO', 'SPY', 'IVV',      // S&P 500
+            'VTI', 'ITOT',            // Total US Stock Market
+
+            // --- Technologiczne i Sektorowe ---
+            'QQQ', 'TQQQ', 'XLK',     // Nasdaq / Technology
+            'ARKK',                   // Innovation
+
+            // --- Cały Świat i Rynki Zagraniczne ---
+            'VT', 'VXUS',             // Total World / Ex-US
+            'VEA',                    // Developed Markets (Europa, Japonia)
+            'VWO', 'EEM', 'IEMG',     // Emerging Markets
+
+            // --- Dywidendowe i Value ---
+            'SCHD', 'VIG', 'VYM',     // Dividend Growth
+
+            // --- Obligacje i Metale (jako ETF) ---
+            'BND', 'AGG',             // Total Bond Market
+            'GLD', 'IAU', 'SLV'       // Gold & Silver ETFs
+        ];
+
+        // --- 1. LOGIKA KATEGORII I BLOKADY ---
+
+        tickerInput.addEventListener('input', function (e) {
+            const val = e.target.value.toUpperCase();
+
+            // Jeśli nie jest wybrana kategoria 'inne', blokujemy przycisk przy każdej zmianie tickera
+            if (typeSelect.value !== 'inne') {
+                submitBtn.disabled = true;
+                submitBtn.classList.replace('btn-success', 'btn-primary');
+                tickerInput.classList.remove('is-valid');
+            }
+
+            // Automatyczne podpowiedzi kategorii
+            if (val.includes('-USD')) {
+                typeSelect.value = 'crypto';
+            } else if (val.includes('.WA')) {
+                typeSelect.value = 'gpw';
+            } else if (val.includes('=F')) {
+                typeSelect.value = 'metal';
+            } else if (etf_tickers.includes(val)) {
+                typeSelect.value = 'etf';
+            }
+            else {
+                typeSelect.value = 'usa';
+            }
+
+        });
+
+        // Wyjątek dla kategorii "Inne"
+        typeSelect.addEventListener('change', function () {
+            if (this.value === 'inne') {
+                submitBtn.disabled = false;
+                submitBtn.classList.replace('btn-primary', 'btn-success');
+                tickerInput.classList.remove('is-invalid');
+                tickerInput.classList.add('is-valid');
+            } else {
+                // Jeśli wrócimy na giełdowe, a cena nie jest sprawdzona - blokujemy
+                if (!tickerInput.classList.contains('is-valid')) {
+                    submitBtn.disabled = true;
+                    submitBtn.classList.replace('btn-success', 'btn-primary');
+                }
+            }
+        });
+
+        // --- 2. POBIERANIE CENY (WALIDACJA GIEŁDOWA) ---
+
+        async function fetchPrice() {
+            const ticker = tickerInput.value.trim().toUpperCase();
+
+            if (!ticker) {
+                alert("Wpisz najpierw ticker!");
+                return;
+            }
+
+            // Wizualny stan ładowania na przycisku $
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '...';
+
+            try {
+                const response = await fetch(`/get_live_price/${ticker}`);
+                const data = await response.json();
+
+                if (data.price) {
+                    prcInput.value = data.price;
+
+                    // Odblokowanie przycisku "Dodaj"
+                    submitBtn.disabled = false;
+                    submitBtn.classList.replace('btn-primary', 'btn-success');
+                    tickerInput.classList.add('is-valid');
+                    tickerInput.classList.remove('is-invalid');
+
+                    // Automatyczne przeliczenie sumy po pobraniu ceny
+                    calculateTotal();
+                } else {
+                    throw new Error();
+                }
+            } catch (err) {
+                submitBtn.disabled = true;
+                submitBtn.classList.replace('btn-success', 'btn-primary');
+                tickerInput.classList.add('is-invalid');
+                alert("Błąd: Ten ticker nie istnieje w Yahoo Finance!");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        // --- 3. OBLICZENIA LIVE (Cena * Ilość) ---
+
+        function calculateTotal() {
+            const p = parseFloat(prcInput.value);
+            const a = parseFloat(amtInput.value);
+            if (!isNaN(p) && !isNaN(a)) {
+                totInput.value = (p * a).toFixed(2);
+            }
+        }
+
+        function calculateAmount() {
+            const t = parseFloat(totInput.value);
+            const p = parseFloat(prcInput.value);
+            if (!isNaN(t) && !isNaN(p) && p > 0) {
+                amtInput.value = (t / p).toFixed(6);
+            }
+        }
+
+        // Podpięcie przeliczania pod pola
+        amtInput.addEventListener('input', calculateTotal);
+        prcInput.addEventListener('input', calculateTotal);
+        totInput.addEventListener('input', calculateAmount);
+    </script>
+
+
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="table-responsive shadow-sm bg-white p-3 rounded">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Ticker</th>
+                    <th>Typ</th>
+                    <th>Ilość</th>
+                    <th>Wartość</th>
+                    <th>Wzrost/Spadek</th>
+                    <th>Zysk</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in holdings %}
+                <tr>
+                    <td><strong>{{ h.ticker }}</strong></td>
+                    <td><span class="badge bg-secondary">{{ h.asset_type }}</span></td>
+                    <td>{{ h.amount }}</td>
+                    <td>${{ "{:,.2f}".format(h.current_price) }}</td>
+                    <td>${{ "{:,.2f}".format(h.value) }}</td>
+                    <td
+                        class="{% if h.profit > 0.001 %}text-success{% elif h.profit < -0.001 %}text-danger{% else %}text-muted{% endif %}">
+                        <strong>
+                            {{ "+" if h.profit > 0.001 }}{{ "%.2f"|format(h.profit) }}%
+                        </strong>
+                        <br>
+                        <small>
+                            (${{ "{:,.2f}".format(h.profit_val) }})
+                        </small>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </div>
 </body>
+
 </html>

@@ -5,6 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portfolio Tracker</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📈</text></svg>">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0f0f0f;
+            color: #e0e0e0;
+        }
+
+        .main-title {
+            font-weight: 600;
+            font-size: 2rem;
+            /* Zamiast display-4 */
+            letter-spacing: -0.5px;
+            margin-bottom: 0;
+            background: linear-gradient(90deg, #ffffff, #a3a3a3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-section {
+            padding: 20px 0;
+            /* Mniejszy padding góra/dół */
+            border-bottom: 1px solid #222;
+            /* Subtelna linia oddzielająca */
+            margin-bottom: 30px;
+        }
+        /* Nowoczesne karty z efektem szkła */
+        .card {
+            background: rgba(25, 25, 25, 0.8) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 15px !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            border-color: rgba(0, 255, 127, 0.3) !important; /* Subtelny blask przy hoverze */
+        }
+
+        /* Stylizacja tabeli */
+        .table {
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            background: transparent !important;
+        }
+
+        .table tr {
+            background-color: #1a1a1a !important;
+            border-radius: 10px;
+            transition: background 0.2s;
+        }
+
+        .table tr td:first-child { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+        .table tr td:last-child { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+        .table tbody tr:hover {
+            background-color: #252525 !important;
+        }
+
+        /* Pasek nawigacji (jeśli masz) */
+        .btn-outline-info {
+            border-radius: 10px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+    </style>
 </head>
 <body class="bg-light">
     <nav class="navbar navbar-dark bg-dark mb-4">

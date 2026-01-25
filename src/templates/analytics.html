@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-black">Analityka Portfela</h2>
+        <div class="btn-group shadow-sm">
+            <button class="btn btn-dark border-secondary btn-sm time-btn" onclick="updateTimeframe(30, this)">1M</button>
+            <button class="btn btn-dark border-secondary btn-sm time-btn" onclick="updateTimeframe(180, this)">6M</button>
+            <button class="btn btn-dark border-secondary btn-sm time-btn" onclick="updateTimeframe(365, this)">1Y</button>
+            <button class="btn btn-dark border-secondary btn-sm time-btn" onclick="updateTimeframe(1825, this)">5Y</button>
+            <button class="btn btn-dark border-secondary btn-sm time-btn" onclick="updateTimeframe(3650, this)">10Y</button>
+            <button class="btn btn-dark border-secondary btn-sm time-btn" onclick="updateTimeframe(5475, this)">15Y</button>
+            <button class="btn btn-dark border-secondary btn-sm time-btn" onclick="updateTimeframe('max', this)">ALL</button>
+        </div>
+        <div class="d-flex justify-content-end mb-2">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-info me-2">Powrót do dashboardu</a>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        <div class="col-12 mb-4">
+            <div class="card bg-dark border-secondary shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-white mb-4">Wartość Portfela ($)</h5>
+                    <div style="height:300px;"><canvas id="valueLineChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 mb-4">
+            <div class="card bg-dark border-secondary shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title text-white mb-4">Zysk / Strata Netto ($)</h5>
+                    <div style="height:300px;"><canvas id="profitLineChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark border-secondary shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center text-info mb-4">Aktywa</h5>
+                    <div style="height:250px;"><canvas id="assetChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark border-secondary shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title text-center text-warning mb-4">Typy aktywów</h5>
+                    <div style="height:250px;"><canvas id="typeChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+</div>
+
+<div id="data-store" 
+     data-asset-l='{{ asset_labels|tojson|safe }}' data-asset-v='{{ asset_values|tojson|safe }}'
+     data-type-l='{{ type_labels|tojson|safe }}' data-type-v='{{ type_values|tojson|safe }}'
+     data-line-l='{{ line_labels|tojson|safe }}' data-line-v='{{ value_history|tojson|safe }}'
+     data-line-p='{{ profit_history|tojson|safe }}' style="display:none;">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const professionalPalette = [
+        '#2ecc71', '#3498db', '#9b59b6', '#f1c40f', '#e67e22', '#e74c3c', '#1abc9c', '#34495e',
+        '#95a5a6', '#d35400', '#c0392b', '#16a085', '#27ae60', '#2980b9', '#8e44ad', '#2c3e50',
+        '#f39c12', '#bdc3c7', '#7f8c8d', '#00cec9'
+    ];
+
+
+    const store = document.getElementById('data-store');
+    const fullL = JSON.parse(store.getAttribute('data-line-l'));
+    const fullV = JSON.parse(store.getAttribute('data-line-v'));
+    const fullP = JSON.parse(store.getAttribute('data-line-p'));
+
+    let vChart, pChart;
+
+    const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            elements: {
+                line: {
+                    capStyle: 'round',
+                    joinStyle: 'round'
+                }
+            },
+            // KLUCZ DO SUKCESU:
+            normalized: true, 
+            spanGaps: true,
+            datasets: {
+                line: {
+                    decimation: {
+                        enabled: true,
+                        algorithm: 'lttb', // Najlepszy algorytm do zachowania kształtu przy redukcji punktów
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        maxTicksLimit: 10 // Nie upychaj wszystkich dat pod spodem
+                    }
+                }
+            }
+        };
+
+    function initCharts() {
+        // Wykres Kołowy 1
+        new Chart(document.getElementById('assetChart'), {
+            type: 'doughnut',
+            data: {
+                labels: JSON.parse(store.getAttribute('data-asset-l')),
+                datasets: [{ data: JSON.parse(store.getAttribute('data-asset-v')), backgroundColor: professionalPalette, borderWidth: 0 }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
+        });
+
+        // Wykres Kołowy 2
+        new Chart(document.getElementById('typeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: JSON.parse(store.getAttribute('data-type-l')),
+                datasets: [{ data: JSON.parse(store.getAttribute('data-type-v')), backgroundColor: professionalPalette, borderWidth: 0 }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } } }
+        });
+
+        // Wykres Wartości (Liniowy)
+        vChart = new Chart(document.getElementById('valueLineChart'), {
+            type: 'line',
+            data: { 
+                labels: fullL, 
+                datasets: [{ 
+                    label: 'Wartość', 
+                    data: fullV, 
+                    borderColor: '#0d6efd', 
+                    borderWidth: 1.2,       // Cienka linia
+                    pointRadius: 0,         // Brak kropkowanych punktów
+                    pointHoverRadius: 4,    // Kropka tylko przy najechaniu
+                    fill: true, 
+                    backgroundColor: 'rgba(13,110,253,0.05)', 
+                    tension: 0.2            // Subtelne, profesjonalne wygładzenie
+                }] 
+            },
+            options: commonOptions
+        });
+
+        // Wykres Zysku (Liniowy) - ODCHUDZONY
+        pChart = new Chart(document.getElementById('profitLineChart'), {
+            type: 'line',
+            data: { 
+                labels: fullL, 
+                datasets: [{ 
+                    label: 'Zysk', 
+                    data: fullP, 
+                    borderColor: '#198754', 
+                    borderWidth: 1.2,       // Cienka linia
+                    pointRadius: 0,         // Brak kropkowanych punktów
+                    pointHoverRadius: 4,    // Kropka tylko przy najechaniu
+                    fill: true,
+                    backgroundColor: 'rgba(25, 135, 84, 0.05)', // Lekka poświata dla zysku
+                    tension: 0.2 
+                }] 
+            },
+            options: commonOptions
+        });
+        
+        updateTimeframe(30, document.querySelector('.time-btn')); // Start z widokiem 1M
+    }
+
+    function updateTimeframe(days, btn) {
+        // Podświetlanie przycisków (jak wcześniej)
+        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('btn-primary', 'active'));
+        btn.classList.add('btn-primary', 'active');
+
+        let l = (days === 'max') ? fullL : fullL.slice(-days);
+        let v = (days === 'max') ? fullV : fullV.slice(-days);
+        let p = (days === 'max') ? fullP : fullP.slice(-days);
+
+        // Jeśli zakres jest większy niż rok, wyłączamy kropki na linii, żeby było czytelniej
+        const showPoints = days <= 365 && days !== 'max';
+
+        vChart.data.labels = l;
+        vChart.data.datasets[0].data = v;
+        vChart.data.datasets[0].pointRadius = showPoints ? 3 : 0; 
+        vChart.update();
+
+        pChart.data.labels = l;
+        pChart.data.datasets[0].data = p;
+        pChart.data.datasets[0].pointRadius = showPoints ? 3 : 0;
+        pChart.data.datasets[0].borderColor = p[p.length-1] >= 0 ? '#198754' : '#dc3545';
+        pChart.update();
+    }
+
+    window.onload = initCharts;
+</script>
+
+<style>
+    .btn-primary.active { background-color: #0d6efd !important; border-color: #0d6efd !important; }
+    .card { border-radius: 12px; }
+</style>
+{% endblock %}

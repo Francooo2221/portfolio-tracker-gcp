@@ -42,3 +42,7 @@ hosts.ini
 .vscode/
 .idea/
 *.log
+
+
+
+/instance/

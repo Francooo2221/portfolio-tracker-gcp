@@ -23,6 +23,8 @@ class Asset(db.Model):
     @property
     def total_amount(self):
         return sum(t.amount for t in self.transactions)
+    
+    #ticker,typ,ilosc,wartosc, wzrost/spadek wartosci
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
