@@ -36,4 +36,5 @@ hosts.ini
 *.log
 
 # --- Instance files ---
-/instance/
+instance
+src/instance
