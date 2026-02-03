@@ -10,7 +10,7 @@ Projekt polega na stworzeniu i wdrożeniu autorskiej aplikacji webowej do monito
 * **Dynamiczna analityka danych**: Integracja z `yfinance` oraz przetwarzanie danych w `Pandas` w celu generowania wykresów historycznych (Chart.js).
 
 ---
-## Zdjecia
+## 🖼️ Zdjecia
 
 ### Dashboard 
 ![Main Dashboard](./photos/dashboard.jpeg)
